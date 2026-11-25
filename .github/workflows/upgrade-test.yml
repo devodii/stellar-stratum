@@ -1,0 +1,52 @@
+name: upgrade-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: upload first, then upgrade once the upload has been signed and sent
+        type: choice
+        options: [upload, upgrade]
+        default: upload
+
+jobs:
+  propose:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: scratch
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/ci-signing-action
+          path: stratum
+      - uses: stellar/stellar-cli@v28.1.0
+
+      - if: inputs.stage == 'upload'
+        uses: ./stratum/action
+        with:
+          source-account: ${{ vars.DEPLOYER_ACCOUNT }}
+          network: testnet
+          comment: commit
+          github-token: ${{ github.token }}
+          wasm: scratch/wasm/v2.wasm
+
+      - if: inputs.stage == 'upgrade'
+        id: build
+        run: |
+          hash="$(shasum -a 256 scratch/wasm/v2.wasm | cut -d' ' -f1)"
+          stellar contract invoke --id "${{ vars.CONTRACT_ID }}" \
+            --source-account "${{ vars.DEPLOYER_ACCOUNT }}" --network testnet --build-only \
+            -- upgrade --new_wasm_hash "$hash" > upgrade.xdr
+          echo "xdr=$(cat upgrade.xdr)" >> "$GITHUB_OUTPUT"
+
+      - if: inputs.stage == 'upgrade'
+        uses: ./stratum/action
+        with:
+          source-account: ${{ vars.DEPLOYER_ACCOUNT }}
+          network: testnet
+          comment: commit
+          github-token: ${{ github.token }}
+          xdr: ${{ steps.build.outputs.xdr }}
