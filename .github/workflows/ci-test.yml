@@ -1,0 +1,38 @@
+name: ci-test
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      operation:
+        default: upload
+      wasm:
+        default: scratch/wasm/hello.wasm
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: scratch
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/ci-signing-action
+          path: stratum
+      - uses: stellar/stellar-cli@v28.1.0
+      - run: stellar --version
+      - id: propose
+        uses: ./stratum/action
+        with:
+          source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
+          network: testnet
+          operation: ${{ inputs.operation || 'upload' }}
+          wasm: ${{ inputs.wasm || 'scratch/wasm/hello.wasm' }}
+          comment: ${{ github.event_name == 'pull_request' && 'pr' || 'commit' }}
+          github-token: ${{ github.token }}
+      - run: |
+          echo "id=${{ steps.propose.outputs.refractor-id }}"
+          echo "link=${{ steps.propose.outputs.stratum-link }}"
+          echo "hash=${{ steps.propose.outputs.wasm-hash }}"
