@@ -1,13 +1,10 @@
 name: upgrade-test
 
 on:
-  workflow_dispatch:
-    inputs:
-      stage:
-        description: upload first, then upgrade once the upload has been signed and sent
-        type: choice
-        options: [upload, upgrade]
-        default: upload
+  push:
+    branches: ['scratch/stage-*']
+env:
+  STAGE: ${{ github.ref_name == 'scratch/stage-upload' && 'upload' || 'upgrade' }}
 
 jobs:
   propose:
@@ -24,7 +21,7 @@ jobs:
           path: stratum
       - uses: stellar/stellar-cli@v28.1.0
 
-      - if: inputs.stage == 'upload'
+      - if: env.STAGE == 'upload'
         uses: ./stratum/action
         with:
           source-account: ${{ vars.DEPLOYER_ACCOUNT }}
@@ -33,7 +30,7 @@ jobs:
           github-token: ${{ github.token }}
           wasm: scratch/wasm/v2.wasm
 
-      - if: inputs.stage == 'upgrade'
+      - if: env.STAGE == 'upgrade'
         id: build
         run: |
           hash="$(shasum -a 256 scratch/wasm/v2.wasm | cut -d' ' -f1)"
@@ -42,7 +39,7 @@ jobs:
             -- upgrade --new_wasm_hash "$hash" > upgrade.xdr
           echo "xdr=$(cat upgrade.xdr)" >> "$GITHUB_OUTPUT"
 
-      - if: inputs.stage == 'upgrade'
+      - if: env.STAGE == 'upgrade'
         uses: ./stratum/action
         with:
           source-account: ${{ vars.DEPLOYER_ACCOUNT }}
