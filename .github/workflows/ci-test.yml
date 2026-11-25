@@ -36,3 +36,4 @@ jobs:
           echo "id=${{ steps.propose.outputs.refractor-id }}"
           echo "link=${{ steps.propose.outputs.stratum-link }}"
           echo "hash=${{ steps.propose.outputs.wasm-hash }}"
+      - run: cat "$GITHUB_STEP_SUMMARY"
