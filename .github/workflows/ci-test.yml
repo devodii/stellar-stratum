@@ -12,7 +12,7 @@ jobs:
       - id: proposal
         uses: devodii/stellar-stratum/action@action-v1
         with:
-          source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
+          source-account: ${{ vars.DEPLOYER_ACCOUNT }}
           network: testnet
           wasm: wasm/hello.wasm
           comment: pr
