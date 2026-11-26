@@ -22,7 +22,7 @@ jobs:
           ref: feat/ci-signing-action
           path: stratum
       - uses: stellar/stellar-cli@v28.1.0
-      - run: stellar --version
+      - run: stellar --version && node -v
       - id: propose
         uses: ./stratum/action
         with:
@@ -36,4 +36,15 @@ jobs:
           echo "id=${{ steps.propose.outputs.refractor-id }}"
           echo "link=${{ steps.propose.outputs.stratum-link }}"
           echo "hash=${{ steps.propose.outputs.wasm-hash }}"
-      - run: cat "$GITHUB_STEP_SUMMARY"
+      - name: run the script directly and read its summary
+        env:
+          SOURCE_ACCOUNT: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
+          NETWORK: testnet
+          WASM: scratch/wasm/hello.wasm
+          COMMENT: none
+        run: |
+          node stratum/action/propose.mjs
+          echo "--- summary file ---"
+          cat "$GITHUB_STEP_SUMMARY"
+          echo "--- outputs file ---"
+          cat "$GITHUB_OUTPUT"
