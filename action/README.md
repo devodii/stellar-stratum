@@ -29,3 +29,19 @@ example assumes an `upgrade` function that takes the new WASM hash. See
 - Refractor accepts request bodies up to about 100 KB, which is an upload of a WASM of about 73 KB. For a larger transaction the action leaves `refractor-id` empty and sets `artifact-path` to a file with the unsigned XDR. Upload it with `actions/upload-artifact`, and the signers download it, open Stratum on the same network, choose Import in the transaction builder and paste the XDR.
 - The transaction uses the account's next sequence number. If another transaction from the account is sent first, run the workflow again.
 - The authorization must be the source account's own, which the transaction signature covers. Stratum refuses a call that another address has to authorize.
+
+## Moving from one CI key to a multisig deployer account
+
+Today the deployer is usually one account whose secret key sits in a GitHub secret. You can turn that same
+account into a multisig account in Stratum and keep its address, so contracts it already owns stay as they are.
+Try it on testnet first.
+
+1. Open Stratum on the deployer account, with its network chosen, and connect a wallet that holds the current key. The key in the GitHub secret is the only signer at this point, so it has to sign this first change.
+2. On the dashboard, under Multisig, choose Edit Configuration.
+3. Under Current Signers, add each person's public key with a weight, using the field at the bottom of the list and Add.
+4. Under Operation Thresholds, set Low, Medium and High. For three people who each weigh 1, a Medium and High of 2 means any two of them must agree. Contract uploads, deploys and upgrades are Medium operations. Restoring or extending contract data is Low.
+5. Lower the weight of the Current Account row to 0 so the old CI key can no longer sign. Stratum shows a lockout warning if the weights and thresholds would leave nobody able to sign, so read it before you continue.
+6. Choose Build Configuration Transaction, review it, and sign it with the current key. The signers and thresholds change once it is sent.
+7. In the repository, delete the secret key from GitHub secrets and add the public key as a variable, for example `DEPLOYER_ACCOUNT`. Run the workflow, and open the link from the job summary.
+
+From then on a deploy needs the threshold of signers, and nothing in GitHub can sign it.
