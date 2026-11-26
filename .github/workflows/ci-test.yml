@@ -9,12 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - id: refused
+        continue-on-error: true
+        uses: devodii/stellar-stratum/action@action-v1
+        with:
+          source-account: ${{ vars.DEPLOYER_ACCOUNT }}
+          network: testnet
+          wasm: wasm/hello.wasm
+          signing-key: ${{ secrets.CI_WRONG_KEY }}
+      - run: echo "wrong key outcome=${{ steps.refused.outcome }}"
       - id: proposal
         uses: devodii/stellar-stratum/action@action-v1
         with:
           source-account: ${{ vars.DEPLOYER_ACCOUNT }}
           network: testnet
           wasm: wasm/hello.wasm
+          signing-key: ${{ secrets.CI_SIGNING_KEY }}
           comment: pr
           github-token: ${{ github.token }}
       - run: |
