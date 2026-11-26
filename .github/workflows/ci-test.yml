@@ -9,21 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: pinned
-        uses: devodii/stellar-stratum/action@action-v1.0.0
+      - id: proposal
+        uses: devodii/stellar-stratum/action@action-v1
         with:
           source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
           network: testnet
           wasm: wasm/hello.wasm
           comment: pr
           github-token: ${{ github.token }}
-      - id: major
-        uses: devodii/stellar-stratum/action@action-v1
-        with:
-          source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
-          network: testnet
-          wasm: wasm/hello.wasm
       - run: |
-          echo "pinned id=${{ steps.pinned.outputs.refractor-id }}"
-          echo "major id=${{ steps.major.outputs.refractor-id }}"
-          echo "link=${{ steps.pinned.outputs.stratum-link }}"
+          echo "id=${{ steps.proposal.outputs.refractor-id }}"
+          echo "link=${{ steps.proposal.outputs.stratum-link }}"
