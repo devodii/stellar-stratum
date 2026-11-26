@@ -1,12 +1,6 @@
 name: ci-test
 on:
   pull_request:
-  workflow_dispatch:
-    inputs:
-      operation:
-        default: upload
-      wasm:
-        default: scratch/wasm/hello.wasm
 permissions:
   contents: read
   pull-requests: write
@@ -21,29 +15,28 @@ jobs:
         with:
           ref: feat/ci-signing-action
           path: stratum
-      - uses: stellar/stellar-cli@v28.1.0
-      - run: stellar --version && node -v
+      - run: node -v
       - id: propose
         uses: ./stratum/action
         with:
           source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
           network: testnet
-          operation: ${{ inputs.operation || 'upload' }}
-          wasm: ${{ inputs.wasm || 'scratch/wasm/hello.wasm' }}
-          comment: ${{ github.event_name == 'pull_request' && 'pr' || 'commit' }}
+          wasm: scratch/wasm/hello.wasm
+          comment: pr
           github-token: ${{ github.token }}
       - run: |
           echo "id=${{ steps.propose.outputs.refractor-id }}"
           echo "link=${{ steps.propose.outputs.stratum-link }}"
-          echo "hash=${{ steps.propose.outputs.wasm-hash }}"
-      - name: run the script directly and read its summary
+      - name: run the bundle directly and read its summary
         env:
-          SOURCE_ACCOUNT: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
-          NETWORK: testnet
-          WASM: scratch/wasm/hello.wasm
-          COMMENT: none
+          INPUT_SOURCE-ACCOUNT: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
+          INPUT_NETWORK: testnet
+          INPUT_OPERATION: upload
+          INPUT_WASM: scratch/wasm/hello.wasm
+          INPUT_XDR: ''
+          INPUT_COMMENT: none
         run: |
-          node stratum/action/propose.mjs
+          node stratum/action/dist/propose.mjs
           echo "--- summary file ---"
           cat "$GITHUB_STEP_SUMMARY"
           echo "--- outputs file ---"
