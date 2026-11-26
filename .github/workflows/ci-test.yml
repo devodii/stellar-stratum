@@ -9,35 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: scratch
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/ci-signing-action
-          path: stratum
-      - run: node -v
-      - id: propose
-        uses: ./stratum/action
+      - id: pinned
+        uses: devodii/stellar-stratum/action@action-v1.0.0
         with:
           source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
           network: testnet
-          wasm: scratch/wasm/hello.wasm
+          wasm: wasm/hello.wasm
           comment: pr
           github-token: ${{ github.token }}
+      - id: major
+        uses: devodii/stellar-stratum/action@action-v1
+        with:
+          source-account: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
+          network: testnet
+          wasm: wasm/hello.wasm
       - run: |
-          echo "id=${{ steps.propose.outputs.refractor-id }}"
-          echo "link=${{ steps.propose.outputs.stratum-link }}"
-      - name: run the bundle directly and read its summary
-        env:
-          INPUT_SOURCE-ACCOUNT: GDCHAYNHYTRPRV36UWFZEX2LD2TH7ZF3OATU5RFN2BTULUMXIISRTDRD
-          INPUT_NETWORK: testnet
-          INPUT_OPERATION: upload
-          INPUT_WASM: scratch/wasm/hello.wasm
-          INPUT_XDR: ''
-          INPUT_COMMENT: none
-        run: |
-          node stratum/action/dist/propose.mjs
-          echo "--- summary file ---"
-          cat "$GITHUB_STEP_SUMMARY"
-          echo "--- outputs file ---"
-          cat "$GITHUB_OUTPUT"
+          echo "pinned id=${{ steps.pinned.outputs.refractor-id }}"
+          echo "major id=${{ steps.major.outputs.refractor-id }}"
+          echo "link=${{ steps.pinned.outputs.stratum-link }}"
